@@ -1,0 +1,7 @@
+<?php
+/**
+ * @file
+ * Code for the export support ticket dependentcies nodes feature.
+ */
+
+include_once 'export_support_ticket_dependentcies_nodes.features.inc';

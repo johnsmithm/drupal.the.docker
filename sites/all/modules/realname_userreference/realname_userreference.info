@@ -1,0 +1,7 @@
+name = Realname Userreference
+description = Adds an additional widget to the Userreference field that searches for Realnames for autocompletion and displays them.
+package = Fields
+core = 7.x
+dependencies[] = references
+dependencies[] = user_reference
+dependencies[] = realname

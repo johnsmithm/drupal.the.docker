@@ -1,0 +1,17 @@
+name = roles_export1
+core = 7.x
+package = Features
+dependencies[] = features
+dependencies[] = role_export
+features[features_api][] = api:1
+features[user_role][] = Dozent
+features[user_role][] = Kursmediendateien bearbeiten
+features[user_role][] = Neues-Theme
+features[user_role][] = Spezialaufgaben
+features[user_role][] = hiwi
+features[user_role][] = kannArtikelHinzufügen
+features[user_role][] = kannLöschen
+features[user_role][] = liveTV
+features[user_role][] = memcache
+features[user_role][] = sso-dozent
+features[user_role][] = student

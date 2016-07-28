@@ -1,0 +1,7 @@
+name = roles_export
+core = 7.x
+package = Features
+dependencies[] = features
+dependencies[] = role_export
+features[features_api][] = api:1
+features[user_role][] = administrator

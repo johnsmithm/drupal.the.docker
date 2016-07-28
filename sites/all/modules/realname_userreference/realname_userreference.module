@@ -1,0 +1,293 @@
+<?php
+
+/**
+ * Implementation of hook_menu().
+ */
+function realname_userreference_menu() {
+  $items = array();
+  $items['realname_userreference/autocomplete/%/%/%'] = array(
+    'page callback' => 'realname_userreference_auto',
+    'page arguments' => array(2, 3, 4),
+    'access callback' => 'reference_autocomplete_access',
+    'access arguments' => array(2, 3, 4),
+    'type' => MENU_CALLBACK,
+  );
+  return $items;
+}
+
+/**
+ * Menu callback; Retrieve a pipe delimited string of autocomplete suggestions for existing users
+ */
+function realname_userreference_auto($entity_type, $bundle, $field_name, $string = '') {
+  $field = field_info_field($field_name);
+  $instance = field_info_instance($entity_type, $field_name, $bundle);
+
+  $options = array(
+    'string' => $string,
+    'match' => $instance['widget']['settings']['autocomplete_match'],
+    'limit' => 10,
+  );
+  $references = realname_userreference_potential_references($field, $options);
+
+  $matches = array();
+  foreach ($references as $id => $row) {
+    // Markup is fine in autocompletion results (might happen when rendered
+    // through Views) but we want to remove hyperlinks.
+    $suggestion = preg_replace('/<a href="([^<]*)">([^<]*)<\/a>/', '$2', $row['rendered']);
+    // Remove link tags Add a class wrapper for a few required CSS overrides.
+    $matches[$row['title'] . " [uid:$id]"] = '<div class="reference-autocomplete">' . $suggestion . '</div>';
+  }
+  drupal_json_output($matches);
+}
+
+
+/**
+ * Implementation of hook_field_widget_info().
+ */
+function realname_userreference_field_widget_info() {
+  return array(
+    'realname_userreference_auto' => array(
+      'label' => t('Realnames autocomplete'),
+      'field types' => array('user_reference'),
+      'settings' => array(
+        'autocomplete_match' => 'contains',
+        'size' => 60,
+        'autocomplete_path' => 'realname_userreference/autocomplete',
+      ),
+    ),
+  );
+}
+
+/**
+ * Implements hook_field_widget_settings_form().
+ */
+function realname_userreference_field_widget_settings_form($field, $instance) {
+  $widget   = $instance['widget'];
+  $defaults = field_info_widget_settings($widget['type']);
+  $settings = array_merge($defaults, $widget['settings']);
+
+  $form = array();
+  if ($widget['type'] == 'realname_userreference_auto') {
+    $form['autocomplete_match'] = array(
+      '#type'             => 'select',
+      '#title'            => t('Autocomplete matching'),
+      '#default_value'    => $settings['autocomplete_match'],
+      '#options'          => array(
+        'starts_with'     => t('Starts with'),
+        'contains'        => t('Contains'),
+      ),
+      '#description'      => t('Select the method used to collect autocomplete suggestions. Note that <em>Contains</em> can cause performance issues on sites with thousands of users.'),
+    );
+    $form['size'] = array(
+      '#type'             => 'textfield',
+      '#title'            => t('Size of textfield'),
+      '#default_value'    => $settings['size'],
+      '#element_validate' => array('_element_validate_integer_positive'),
+      '#required'         => TRUE,
+    );
+  }
+  return $form;
+}
+
+/**
+ * Implements hook_field_widget_form().
+ */
+function realname_userreference_field_widget_form(&$form, &$form_state, $field, $instance, $langcode, $items, $delta, $element) {
+  switch ($instance['widget']['type']) {
+    case 'realname_userreference_auto':
+      $element += array(
+        '#type' => 'textfield',
+        '#default_value' => isset($items[$delta]['uid']) ? $items[$delta]['uid'] : NULL,
+        '#autocomplete_path' => $instance['widget']['settings']['autocomplete_path'] . '/' . $instance['entity_type'] . '/' . $instance['bundle'] . '/' . $field['field_name'],
+        '#size' => $instance['widget']['settings']['size'],
+        '#element_validate' => array('realname_userreference_autocomplete_validate'),
+        '#value_callback' => 'realname_userreference_autocomplete_value',
+      );
+      break;
+  }
+  return array('uid' => $element);
+}
+
+/**
+ * Value callback for a realname_userreference autocomplete element.
+ *
+ * Substitute in the user realname for the uid.
+ */
+function realname_userreference_autocomplete_value($element, $input = FALSE, $form_state) {
+  if ($input === FALSE) {
+    // We're building the displayed 'default value': expand the raw uid into
+    // "user name [uid:n]".
+    $uid = $element['#default_value'];
+    if (!empty($uid)) {
+      $query = db_select('realname', 'rn')
+        ->fields('rn',array('realname'))
+        ->condition('uid', $uid)
+        ->range(0, 1);
+      $result = $query->execute();
+      // @todo If no result (user doesn't exist).
+      $value = $result->fetchField();
+      $value .= ' [uid:' . $uid . ']';
+      return $value;
+    }
+  }
+}
+
+/**
+ * Validation callback for a realname_userreference autocomplete element.
+ */
+function realname_userreference_autocomplete_validate($element, &$form_state, $form) {
+  $field = field_widget_field($element, $form_state);
+  $instance = field_widget_instance($element, $form_state);
+
+  $value = $element['#value'];
+  $uid = NULL;
+  if (!empty($value)) {
+    // Check whether we have an explicit "[uid:n]" input.
+    preg_match('/^(?:\s*|(.*) )?\[\s*uid\s*:\s*(\d+)\s*\]$/', $value, $matches);
+    if (!empty($matches)) {
+      // Explicit uid. Check that the 'name' part matches the actual name for
+      // the uid.
+      list(, $name, $uid) = $matches;
+      if (!empty($name)) {
+        $names = _realname_userreference_get_user_names(array($uid));
+        if ($name != $names[$uid]) {
+          form_error($element, t('%name: name mismatch. Please check your selection.', array('%name' => $instance['label'])));
+        }
+      }
+    }
+    else {
+      // No explicit uid (the submitted value was not populated by autocomplete
+      // selection). Get the uid of a referencable user from the entered name.
+      $options = array(
+        'string' => $value,
+        'match' => 'equals',
+        'limit' => 1,
+      );
+      $references = realname_userreference_potential_references($field, $options);
+      if ($references) {
+        // @todo The best thing would be to present the user with an
+        // additional form, allowing the user to choose between valid
+        // candidates with the same name. ATM, we pick the first
+        // matching candidate...
+        $uid = key($references);
+      }
+      else {
+        form_error($element, t('%name: found no valid user with that name.', array('%name' => $instance['label'])));
+      }
+    }
+  }
+
+  // Set the element's value as the user id that was extracted from the entered
+  // input.
+  form_set_value($element, $uid, $form_state);
+}
+
+/**
+ * List of referenceable users defined by user role and status.
+ */
+function realname_userreference_potential_references($field, $options) {
+  // Avoid useless work.
+  $filter_roles = array_filter($field['settings']['referenceable_roles']);
+  $filter_status = array_filter($field['settings']['referenceable_status']);
+  if (!count($filter_status) && !count($filter_roles)) {
+    return array();
+  }
+
+  $query = db_select('users', 'u');
+  $query->leftJoin('realname', 'rn', 'u.uid = rn.uid');
+
+    // Select the whole record, so that format_username() has enough
+    // information.
+  $query
+    ->fields('u')
+    ->fields('rn')
+    ->addMetaData('id', '_realname_userreference_potential_references')
+    ->addMetaData('field', $field)
+    ->addMetaData('options', $options);
+
+  // Enable this filter only if any statuses checked (and not both).
+  if (count($filter_status) == 1) {
+    $query->condition('u.status', array_keys($filter_status), 'IN');
+  }
+
+  // Skip filter when "authenticated user" choosen.
+  if ($filter_roles && !isset($filter_roles[DRUPAL_AUTHENTICATED_RID])) {
+    $query->join('users_roles', 'r', 'u.uid = r.uid');
+    $query->condition('r.rid', array_keys($filter_roles), 'IN');
+  }
+
+  if ($options['string'] !== '') {
+    switch ($options['match']) {
+      case 'contains':
+        $query->condition('rn.realname', '%' . $options['string'] . '%', 'LIKE');
+        break;
+
+      case 'starts_with':
+        $query->condition('rn.realname', $options['string'] . '%', 'LIKE');
+        break;
+
+      case 'equals':
+      default: // no match type or incorrect match type: use "="
+        $query->condition('rn.realname', $options['string'], '=');
+        break;
+    }
+  }
+
+  if (isset($options['ids'])) {
+    $query->condition('u.uid', $options['ids'], 'IN');
+  }
+
+  // Explicitly exclude the anonymous user.
+  $query->condition('u.uid', 0, '<>');
+
+  if ($options['limit']) {
+    $query->range(0, $options['limit']);
+  }
+  $query->orderBy('rn.realname');
+
+  $result = $query->execute()->fetchAll();
+  $references = array();
+  foreach ($result as $account) {
+    $account->name = $account->realname;
+    $references[$account->uid] = array(
+      'title'    => $account->realname,
+      'rendered' => check_plain(format_username($account)),
+    );
+  }
+  return $references;
+}
+
+/**
+ * Helper function for widgets and formatters.
+ *
+ * Store user realnames collected in the curent request.
+ */
+function _realname_userreference_get_user_names($uids, $known_titles = array()) {
+  $titles = &drupal_static(__FUNCTION__, array());
+
+  // Save titles we receive.
+  $titles += $known_titles;
+
+  // Collect nids to retrieve from database.
+  $uids_query = array();
+  foreach ($uids as $uid) {
+    if (!isset($titles[$uid])) {
+      $uids_query[] = $uid;
+    }
+  }
+  if ($uids_query) {
+    $query = db_select('realname', 'rn')
+      ->fields('rn', array('uid', 'realname'))
+      ->condition('uid', $uids);
+    $titles += $query->execute()->fetchAllKeyed();
+  }
+
+  // Build the results array.
+  $return = array();
+  foreach ($uids as $uid) {
+    $return[$uid] = isset($titles[$uid]) ? $titles[$uid] : '';
+  }
+
+  return $return;
+}
+

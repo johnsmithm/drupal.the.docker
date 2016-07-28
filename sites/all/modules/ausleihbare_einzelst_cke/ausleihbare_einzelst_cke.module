@@ -1,0 +1,7 @@
+<?php
+/**
+ * @file
+ * Code for the ausleihbare Einzelstücke feature.
+ */
+
+include_once 'ausleihbare_einzelst_cke.features.inc';

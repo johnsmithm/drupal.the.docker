@@ -1,0 +1,7 @@
+<?php
+/**
+ * @file
+ * Code for the merci items export feature.
+ */
+
+include_once 'merci_items_export.features.inc';

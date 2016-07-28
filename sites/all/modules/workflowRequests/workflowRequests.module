@@ -1,0 +1,43 @@
+<?php
+
+/**
+ * Implements hook_permission().
+ */
+function workflowRequests_permission() {
+  return array(
+    'use workflowRequest module' => array(
+      'title' => t('Sent and get workflow requests'),
+    )
+  );
+}
+
+
+/**
+ * Implements hook_menu().
+ */
+function workflowRequests_menu() {
+  $items['workflowRequests'] = array(
+    'title' => 'No title',
+    'page callback' => 'workflowRequests_Function',
+    'access arguments' => array('use workflowRequest module')
+  );
+
+  return $items;
+}
+
+
+/**
+ *	Get request variable and make some changes on site or return some information.
+ */
+ function workflowRequests_Function(){
+	 $action = $_REQUEST['action'];
+	 $result = '';
+	 switch($action){
+		case 'show' :
+			$result = array('name'=>1);
+		break;
+	 }
+	 
+	print_r(json_encode($result));
+	exit();
+ }

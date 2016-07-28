@@ -1,0 +1,6 @@
+name = WorkFlow Requests
+description = Enables get and process requests.
+package = Core
+version = VERSION
+core = 7.x
+
