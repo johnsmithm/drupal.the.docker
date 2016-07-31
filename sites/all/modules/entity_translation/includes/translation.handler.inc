@@ -441,7 +441,10 @@ class EntityTranslationDefaultHandler implements EntityTranslationHandlerInterfa
       $query->condition('revision_id', $revisions_ids, 'IN');
     }
 
-    $results = $query->execute();
+    $results = $query
+      ->orderBy('entity_id')
+      ->orderBy('created')
+      ->execute();
 
     foreach ($results as $row) {
       $id = $row->entity_id;
@@ -1612,12 +1615,9 @@ class EntityTranslationDefaultHandler implements EntityTranslationHandlerInterfa
 
   /**
    * Returns the title to be used for the entity form page.
-   *
-   * This may contain HTML markup and thus needs to be sanitized, since it will
-   * be used as page title as-is.
    */
   protected function entityFormTitle() {
-    return check_plain($this->getLabel());
+    return $this->getLabel();
   }
 
   /**

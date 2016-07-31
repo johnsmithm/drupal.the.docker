@@ -1,0 +1,7 @@
+<?php
+/**
+ * @file
+ * Code for the ausleihe export feature.
+ */
+
+include_once 'ausleihe_export.features.inc';
