@@ -218,7 +218,7 @@ $databases = array (
     'default' => 
     array (
       'database' => 'placeholder_DB',
-      'username' => 'placeholder_DB_USER',
+      'username' => 'placeholder_USER',
       'password' => 'placeholder_PWD',
       'host' => 'placeholder_HOST',
       'port' => '',
