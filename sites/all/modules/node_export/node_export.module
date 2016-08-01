@@ -567,6 +567,10 @@ function node_export_import($code_string, $msg_t = 't', $save = TRUE) {
   $new_nodes = array();
   $messages = array();
   foreach ($nodes as $original_node) {
+    if($original_node->type == "support_ticket"){
+      $original_node->project = $original_node->project->projid;
+      //drupal_set_message("an suport ticket!!");
+    }
     $node = node_export_node_clone($original_node);
 
     // Import file fields.
