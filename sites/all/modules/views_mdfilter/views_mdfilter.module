@@ -1,0 +1,355 @@
+<?php 
+function views_mdfilter_views_pre_view(&$view, &$display_id, &$args) {
+
+
+}
+function views_mdfilter_preprocess_views_view_table(&$vars) {
+//dd("views_mdfilter_preprocess_views_view_table");
+//$vars['header'] = array();
+if($vars['view']->name=="solrview" && !strpos(request_uri(),"solrview")) $vars['header'] = array();
+}
+function views_mdfilter_simplesamlphp_auth_user_roles_alter(&$roles){
+dd("views_mdfilter_simplesamlphp_auth_user_roles_alter");
+ 
+}
+
+  function views_mdfilter_facet_items_alter(&$build, &$settings) {
+  $key="";$item="";$myKey="";$myDate="";
+  
+                   if ($settings->facet == "field_startzeit:value" ) {
+                   foreach ($build as $key => $item){
+                  $date = date_create_from_format('Y-m-d', $build[$key]['#indexed_value']);
+                  $build[$key]['#markup']=$date->format('j.n.Y') ; 
+            
+                  }
+             
+                         }
+                   if ( $settings->facet == "field_aufnahmedatum") {
+               //dd($build);
+                  foreach ($build as $key => $item){
+               
+                foreach ($item as $myKey => $myItem){
+                 
+                 if ($myKey=="#item_children"){
+                 foreach ($myItem as $myKeyDate => $myDate){
+                
+                  $date = date_create_from_format('Y-m-d', $myDate['#indexed_value']);
+           // dd($build[$key][$myKey][$myKeyDate]);
+           if ($date){
+             $build[$key][$myKey][$myKeyDate]['#markup']=$date->format('j.n.Y') ; 
+                 }}
+                 }
+                
+            }
+                  }
+             
+                         }
+                      }
+
+
+
+function views_mdfilter_views_pre_execute(&$view) {
+// Schreibe die Query sortiert in ein Cookie
+// Der Erklärungsseiten View fragt das cookie ab und
+// stellt dann die jeweiligen Seiten dar
+
+if ($view->name=="solrGrouping_2015"){
+global $user;
+
+ //dd($_GET);
+$myQueryArray=array();
+if (isset($_GET['f'])){
+$myQueryArray=($_GET['f']);
+ sort($myQueryArray);
+
+//lists_session("solr_query",serialize($myQueryArray));
+//dd(lists_session("solr_query"));
+}
+
+if (isset($_GET['search_api_views_fulltext_op'])){
+$myQueryArray[]=array("search_api_views_fulltext_op" => $_GET['search_api_views_fulltext_op'],"search_api_views_fulltext" => $_GET['search_api_views_fulltext']);
+
+//dd(lists_session("solr_query"));
+}
+if (isset($_GET['f']) || isset($_GET['search_api_views_fulltext_op'])){
+lists_session("solr_query",serialize($myQueryArray));
+$_SESSION['lists']['solr_query']=serialize($myQueryArray);
+if (serialize($myQueryArray)!=lists_session("solr_query")) dd("cookie wurde nicht geschrieben");
+//dd("lists_session im View");
+//dd($_SESSION['lists']['solr_query']);
+
+}
+}
+ 
+/*  if ($user->uid==6897) {
+//dd($view->exposed_input);
+$SESSION['my_current_query'] = array();
+$SESSION['my_current_query']= $view->exposed_input['f'];
+//dd($SESSION['my_current_query']);
+$user->field_standardsuchseite['und']=array();
+foreach ($SESSION['my_current_query'] as $query_part){
+dd($query_part);
+$user->field_standardsuchseite['und'][]= $query_part;
+dd($user->field_standardsuchseite['und']);
+}
+user_save($user);
+}
+ */  
+ 
+ 
+
+ 
+}
+
+
+/**
+ * Lets modules alter the search results returned from a Solr search.
+ *
+ * @param array $results
+ *   The results array that will be returned for the search.
+ * @param SearchApiQueryInterface $query
+ *   The SearchApiQueryInterface object representing the executed search query.
+ * @param object $response
+ *   The Solr response object.
+ */
+ 
+
+function views_mdfilter_search_api_solr_search_results_alter(array &$results, SearchApiQueryInterface $query, $response) {
+//dd("views_mdfilter_search_api_solr_search_results_alter");
+global $user;
+//dd($response);
+$myCookie=array();
+
+//dd($response);
+
+//dd( $results['results']);
+//dd($results['search_api_solr_response']->grouped->ss_title->groups);
+ //dd($response->grouped->ss_title);
+if (isset($results['search_api_solr_response']->grouped->ss_title->groups)){
+foreach ($results['search_api_solr_response']->grouped->ss_title->groups as $gruppe){
+if ($gruppe->doclist->numFound >1){
+//$results['my_groups'][]=array('thomas'=>$gruppe->doclist);
+ $myNid=($gruppe->doclist->docs[0]->item_id);
+  $myCount=$gruppe->doclist->numFound;
+ $myCookie[]=$myNid;
+$myCookie[]=$myCount;
+}
+//$results['search_api_solr_response']->grouped->ss_title->groups->groupValue="Hallo";
+//$gruppe->groupValue="hallo";
+
+}
+
+//dd($response);
+
+//dd("php validiierung");
+lists_session("solrMehrfachtreffer",$myCookie);
+
+}
+}
+
+function views_mdfilter_preprocess_search_results(&$variables) {
+
+//dd("views_mdfilter_preprocess_search_results");
+}
+
+function views_mdfilter_action_info() {
+
+
+  return array(
+    'views_mdfilter_kursdateien_add_action' => array(
+      'label' => t('Mediendateien zum Kurs hinzufügen custom'),
+      'type' => 'entity',
+      'aggregate' => FALSE,
+      'configurable' => FALSE,
+      'hooks' => array(),
+      'pass rows' => TRUE,
+      'triggers' => array('any'),
+    ),
+  );
+}
+function views_mdfilter_search_api_query_alter(SearchApiQueryInterface $query) {
+if (request_uri()=="/de/suche" && !strpos($_SERVER['HTTP_REFERER'],"suche")){
+returnStandardSearchpage();
+//exit;
+}
+//dd($query);
+}
+function hook_search_api_alter_callback_info() {
+dd("hook_search_api_alter_callback_info");
+}
+/**
+* Implementation of a Drupal action.
+* Passes selected ids as arguments to a view.
+*/
+function views_mdfilter_kursdateien_add_action($entities, $context = array()) {
+dd("views_mdfilter_kursdateien_add_action");
+$values="";
+$id=lists_session("kursNID");
+ 
+$mediendateiDerMP3sNID=$entities->nid;
+$mediendateiNID=node_load($entities->nid);
+$node=node_load(($id));
+ 
+// Hier überprüfen, ob es ein Video ist.
+$fileID="";
+$audioArray="";
+//dd($node->field_videodatei);
+if (!isset($mediendateiNID->field_videodatei['und'][0]['url'])){
+dd("AUDIO");
+$fileID="";
+$audioArray="";
+foreach ($context['rows'] as $myContext){
+$fileID=$myContext->field_data_field_audiodatei_delta;
+$audioArray=$myContext->_field_data['nid']['entity']->field_audiodatei['und'][$fileID];
+
+}
+dd("File id ist".$fileID);
+//dd($audioArray);
+}else{
+$fileID="";
+$audioArray="";
+foreach ($context['rows'] as $myContext){
+
+// Es st ein Video
+$fileID=$myContext->field_data_field_videodatei_delta;
+dd("VIDEO");
+//dd("context['rows']");
+//dd($context['rows']);
+
+$audioArray=$myContext->_field_data['nid']['entity']->field_videodatei['und'][0];
+}
+}
+
+
+// Load the controller class file.
+  module_load_include('inc', 'entity', 'includes/entity.controller');
+  // Use the currently logged in user if a $uid argument is not defined.
+  global $user;
+  if (empty($uid)) {
+    $uid = $user->uid;
+  }
+  
+  // Überprüfen, ob die nodeID in der Session Variable
+  // die gleiche ist wie in meiner anderen Session Variable
+  // Wenn Nein, dann schreib die aktuelle nodeID in die zweite Session Variable
+  // und schreib eine Kapitelüberschrift
+  // Falls ja, dann schreibe ich ein weiteres MP3 aus der gleichen Mediendatei
+  // Dann verzichte auf die Kapitelüberschrift
+  // Session Variable 2= backupNID
+    $backupNID=lists_session("backupNID");
+$values="";
+  if ($backupNID){
+
+  if ($backupNID==$mediendateiDerMP3sNID){
+  // schreibe keine Kapitelüberschrift
+if (!isset($mediendateiNID->field_videodatei['und'][0]['url'])){
+  $values = array(
+    'field_name' => 'field_kursmedien',
+    'field_audiodatei' => array(
+      LANGUAGE_NONE => array($audioArray)),
+  );
+  }else{
+   $values = array(
+    'field_name' => 'field_kursmedien',
+    'field_videodatei' => array(
+      LANGUAGE_NONE => array($audioArray)),
+  );
+  
+  }
+  }else{
+  // Schreibe eine Kapitelüberschrift
+  // Nehme den Titel der Mediendatei
+
+  $values = array(
+    'field_name' => 'field_kursmedien',
+    'field_kursbemerkung' => array(
+      LANGUAGE_NONE => array(array('value' => "<a href='/node/".$context['rows']->nid."'>".$entities->title."</a>",'format' => 'full_html')),
+    ),
+     'field_audiodatei' => array(
+      LANGUAGE_NONE => array($audioArray)),
+  );
+  }
+  }
+dd("Values vor dem Erstellen");
+  
+    // schreibe die aktuelle Mediendatei-NID in die backupNID
+
+  lists_session("backupNID", $mediendateiDerMP3sNID);
+  $entity = entity_create('field_collection_item', $values);
+  //dd($entity);
+
+  // Attach the field_collection entity to the application node. This has to
+  // happen separately so that it actually works -- you can't just specify
+  // this via the $values array.
+  $entity->setHostEntity('node', $node);
+
+  // Save the entity. Since it's attached to the right application node, this
+  // will both create the field_collection entity and update the application
+  // node to point to the new field_activity_log record.
+$entity->save();
+}
+ 
+
+
+
+function views_mdfilter_search_api_solr_query_alter(array &$call_args, SearchApiQueryInterface $query) {
+dd("search_api_solr_query_alter");
+# finde den aktuellen User heraus
+# und ob er angemeldet ist
+global $user;
+
+#dd($user->roles);
+ #  dd("user ist: ".$user->uid);
+  # if( $user->uid > 0 ){
+
+ #        # zeige alle Mediendateien, die er in Auftrag gegeben hat
+#         $call_args['params']['fq'][3]= "im_field_author:\"$user->uid\"";
+#         $call_args['params']['fq'][3]=$call_args['params']['fq'][3]. ' OR ( bs_field_oeffentlich:"true")';
+#           dd("Hallo, views Filter??");
+// dd($call_args);
+//dd($query);
+#   }
+# Zeige alle Mediendateien an, die
+# der aktuelle User in Auftrag gegeben hat
+# als öffentlich markiert sind
+# vom User 'archiv' in Auftrag gegeben wurden
+
+# Administratoren und hiwis sehen alles
+# wird mysolrview aufgerufen, dann zeige nur die eigenen Aufnahmen an
+$request=strrpos(request_path(),"ysolrview");
+//$call_args['params']['fq'][]='*:* AND -(im_field_author:"123")';
+//dd("request:".$request);
+
+if ($request){
+dd("request:".$request);
+if ($user->uid==1){
+$call_args['params']['fq'][]= "im_field_author:\"6897\"";
+}else{
+$call_args['params']['fq'][]= "im_field_author:\"$user->uid\"";
+}
+//$call_args['params']['sort']= "sort_ss_title asc";
+
+//dd($call_args['groups']);
+//$call_args['params']['fq'][3]=$call_args['params']['fq'][3]. ' AND ( bs_sticky:"true")';
+}elseif (!in_array("administrator", $user->roles) && !in_array("hiwi", $user->roles) && !strrpos(request_path(),"vdrview_view2") && $call_args['params']['fq'][0]!='ss_type:"sendungen"')
+{
+dd("im mdviewFilter");
+
+
+
+if (isset($call_args['params']['fq'][4])){
+ $call_args['params']['fq'][4]=$call_args['params']['fq'][4]. ' bs_field_oeffentlich:"true"';
+ }else{
+  $call_args['params']['fq'][4]=' bs_field_oeffentlich:"true"';
+
+ }
+}
+
+//dd($call_args);
+// dd($query);
+  }
+function views_mdfilter_apachesolr_query_prepare($query) {
+
+  // $query->addFilter('bundle', 'mediendatei', $exclude = TRUE);
+}
+

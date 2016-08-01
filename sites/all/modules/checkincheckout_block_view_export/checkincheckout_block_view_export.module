@@ -1,0 +1,7 @@
+<?php
+/**
+ * @file
+ * Code for the checkincheckout block view export feature.
+ */
+
+include_once 'checkincheckout_block_view_export.features.inc';

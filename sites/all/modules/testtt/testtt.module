@@ -1,0 +1,7 @@
+<?php
+/**
+ * @file
+ * Code for the testtt feature.
+ */
+
+include_once 'testtt.features.inc';
