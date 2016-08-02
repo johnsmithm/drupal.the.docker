@@ -143,6 +143,7 @@ function rules_php_eval($code, $arguments = array()) {
  */
 function rules_php_eval_return($code, $arguments = array()) {
   extract($arguments);
+ // dd($code);
   return eval($code);
 }
 
