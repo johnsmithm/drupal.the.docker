@@ -1,0 +1,7 @@
+name = "Mediathek util"
+description = "Implementation of functions, http/ajax request responses."
+core = "7.x"
+files[] = mediathek_util.module
+
+version = "7.x-2.14"
+core = "7.x"

@@ -1,0 +1,24 @@
+<?php
+
+/**
+ * @file
+ * MEdiathek util.
+ */
+ 
+ /**
+ * Implements hook_menu().
+ */
+function mediathek_util_menu() {
+  $items = array();
+ 
+    $items['mediathek_util_ajax_response'] = array(
+      'title' => 'Ajax responses',
+      'page callback' => 'drupal_get_form',
+      'page arguments' => array('mediathek_util_ajax_response_callback'),
+     # 'access callback' => '',
+      'type' => MENU_LOCAL_TASK,
+	  'file' => 'include/mediathek_util_ajax_response_callback_file.inc'
+    );
+
+  return $items;
+}
