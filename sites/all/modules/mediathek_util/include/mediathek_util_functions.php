@@ -38,5 +38,6 @@ function mediathek_util_check_number($number){
     }
     return true;
 }
+
  
 ?>

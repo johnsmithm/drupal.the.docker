@@ -16,6 +16,7 @@ function mediathek_util_ajax_response_callback(){
 			break;
 		case 'checkin_checkout' :
 			if (isset($_GET['nid']) && is_numeric($_GET['nid']) && isset($_GET['barcode']) && is_numeric($_GET['barcode'])  && isset($_GET['mode']) && is_numeric($_GET['mode'])){
+				//todo: check get variables
 				$nid=$_GET['nid'];
 				$barcode=$_GET['barcode'];
 				$mode=$_GET['mode'];
@@ -25,11 +26,11 @@ function mediathek_util_ajax_response_callback(){
 				}else{
 					$view_display="checkin";
 				}
-				//rules_invoke_component('rules_artikel_checkin_checkout', $nid, $barcode,$mode);
+				rules_invoke_component('rules_artikel_checkin_checkout', $nid, $barcode,$mode);
 			}
 			break;
 		 
-	}    
+	} 
     echo(drupal_json_encode($result));
 	module_invoke_all('exit');
 	exit;
