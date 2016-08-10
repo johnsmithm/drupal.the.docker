@@ -22,3 +22,10 @@ function mediathek_util_menu() {
 
   return $items;
 }
+
+/**
+ * Implements hook_block_view_alter().
+ */
+function mediathek_util_view_alter(&$data, $block){
+	dsm($block);
+}
