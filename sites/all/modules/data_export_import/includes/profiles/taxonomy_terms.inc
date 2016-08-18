@@ -64,11 +64,11 @@ function data_export_import_export_taxonomy_terms_form_submit($form, &$form_stat
 
   // This module has not yet been extended to correctly handle data
   // which has internationalization (i18n) enabled.
-  if (module_exists('i18n')) {
+//  if (module_exists('i18n')) {
 
-    drupal_set_message(t("The data export functionality is not currently compatible with internationalization (i18n)."), 'error');
-    return TRUE;
-  }
+  //  drupal_set_message(t("The data export functionality is not currently compatible with internationalization (i18n)."), 'error');
+   // return TRUE;
+ // }
 
   // This is the function which will carry out the exporting of the
   // taxonomy terms to a dataset file.

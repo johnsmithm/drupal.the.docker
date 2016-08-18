@@ -1,0 +1,17 @@
+name = field_sitzungspunkt
+core = 7.x
+package = Features
+dependencies[] = features
+dependencies[] = field_collection
+dependencies[] = field_sql_storage
+dependencies[] = list
+dependencies[] = options
+dependencies[] = realname_userreference
+dependencies[] = text
+dependencies[] = user_reference
+features[features_api][] = api:1
+features[field][] = field_collection_item-field_sitzungspunkt-field_erledigt
+features[field][] = field_collection_item-field_sitzungspunkt-field_sitzungskommentar
+features[field][] = field_collection_item-field_sitzungspunkt-field_sitzungsthema
+features[field][] = field_collection_item-field_sitzungspunkt-field_zugewiesen_an
+features[field][] = node-sitzungsprotokoll-field_sitzungspunkt

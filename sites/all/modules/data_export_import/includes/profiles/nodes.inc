@@ -859,6 +859,10 @@ function data_export_import_batch_import_dataset_lines($file_path, $fields_of_ty
 
     $dataset_node = unserialize(base64_decode($line_from_file));
 
+    if($dataset_node->type == "support_ticket"){//could work
+      $dataset_node->project = $dataset_node->project->projid;
+    }
+
     // Find if there is an existing node and see if it matches what is
     // in the dataset. Note that node_load() returns FALSE if it can't
     // find a node.
