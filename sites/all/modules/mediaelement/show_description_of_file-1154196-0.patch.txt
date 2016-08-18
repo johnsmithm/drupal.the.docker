@@ -1,0 +1,32 @@
+diff --git a/mediaelement.module b/mediaelement.module
+index 7c3cdd2..c02e0ef 100644
+--- a/mediaelement.module
++++ b/mediaelement.module
+@@ -103,6 +103,7 @@ function mediaelement_field_formatter_view($entity_type, $entity, $field, $insta
+   $element = array();
+   $path = drupal_get_path('module', 'mediaelement');
+   foreach ($items as $delta => $item) {
++    $display['settings']['description'] = $item['description'];
+     $settings = $display['settings'];
+     $js_settings = array();
+     $js_settings['opts'] = array();
+@@ -163,6 +164,9 @@ function mediaelement_theme() {
+ 
+ function theme_mediaelement_video($variables) {
+   $output = '<div class="mediaelement-video">';
++  if ($variables['settings']['description']) {
++    $output .= '<p class="mediaelement-description">' . $variables['settings']['description'] . '</p>';
++  }
+   $output .= '<video ' . drupal_attributes($variables['attributes']) . ' ></video>';
+   if ($variables['settings']['download_link']) {
+     $output .= '<div class="mediaelement-download-link"><a href="' . $variables['attributes']['src'] . '">' . filter_xss_admin($variables['settings']['download_text']) . '</a></div>';
+@@ -173,6 +177,9 @@ function theme_mediaelement_video($variables) {
+ 
+ function theme_mediaelement_audio($variables) {
+   $output = '<div class="mediaelement-audio">';
++  if ($variables['settings']['description']) {
++    $output .= '<p class="mediaelement-description">' . $variables['settings']['description'] . '</p>';  //Added by Abdulrahman
++  }
+   $output .= '<audio ' . drupal_attributes($variables['attributes']) . ' ></audio>';
+   if ($variables['settings']['download_link']) {
+     $output .= '<div class="mediaelement-download-link"><a href="' . $variables['attributes']['src'] . '">' . filter_xss_admin($variables['settings']['download_text']) . '</a></div>';

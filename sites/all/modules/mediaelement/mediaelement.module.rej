@@ -1,0 +1,16 @@
+***************
+*** 103,108 ****
+    $element = array();
+    $path = drupal_get_path('module', 'mediaelement');
+    foreach ($items as $delta => $item) {
+      $settings = $display['settings'];
+      $js_settings = array();
+      $js_settings['opts'] = array();
+--- 103,109 ----
+    $element = array();
+    $path = drupal_get_path('module', 'mediaelement');
+    foreach ($items as $delta => $item) {
++     $display['settings']['description'] = $item['description'];
+      $settings = $display['settings'];
+      $js_settings = array();
+      $js_settings['opts'] = array();

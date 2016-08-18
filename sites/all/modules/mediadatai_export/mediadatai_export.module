@@ -1,0 +1,7 @@
+<?php
+/**
+ * @file
+ * Code for the mediadatai_export feature.
+ */
+
+include_once 'mediadatai_export.features.inc';
