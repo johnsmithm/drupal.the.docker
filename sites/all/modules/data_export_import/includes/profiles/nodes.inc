@@ -60,11 +60,11 @@ function data_export_import_export_nodes_form_submit($form, &$form_state) {
 
   // This module has not yet been extended to correctly handle data
   // which has internationalization (i18n) enabled.
-  if (module_exists('i18n')) {
+  /*if (module_exists('i18n')) {
 
     drupal_set_message(t("The data export functionality is not currently compatible with internationalization (i18n)."), 'error');
     return TRUE;
-  }
+  }*/
 
   data_export_import_export_nodes_to_file($form_state);
 
